@@ -12,7 +12,7 @@ public class Grid2DView : MonoBehaviour
     private const int Width = 16, Height = 16;
 
     private CellView[,] _cellViews;
-    private Color highlightColor = new(0.5f, 0.5f, 0.5f, 1f);
+    private Color highlightColor = new(0.75f, 0.75f, 0.75f, 1f);
     private bool _isDragging;
     private int _startX, _startZ;
     private int _currentX, _currentZ;
