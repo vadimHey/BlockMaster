@@ -6,13 +6,13 @@ public class Grid2DView : MonoBehaviour
 {
     [SerializeField] private RectTransform gridPanel;
     [SerializeField] private GameObject cellPrefab;
-    [SerializeField] private Color highlightColor = new Color(1f, 1f, 0.5f, 0.8f);
 
     public event Action<int, int, int, int> OnAreaSelected;
 
     private const int Width = 16, Height = 16;
 
     private CellView[,] _cellViews;
+    private Color highlightColor = new(0.5f, 0.5f, 0.5f, 1f);
     private bool _isDragging;
     private int _startX, _startZ;
     private int _currentX, _currentZ;
@@ -46,10 +46,8 @@ public class Grid2DView : MonoBehaviour
         if (Input.GetMouseButtonDown(0) && TryGetCellUnderMouse(out int x, out int z))
         {
             _isDragging = true;
-            _startX = x;
-            _startZ = z;
-            _currentX = x;
-            _currentZ = z;
+            _startX = x; _startZ = z;
+            _currentX = x; _currentZ = z;
             HighlightArea();
         }
 
@@ -57,8 +55,7 @@ public class Grid2DView : MonoBehaviour
         {
             if (x != _currentX || z != _currentZ)
             {
-                _currentX = x;
-                _currentZ = z;
+                _currentX = x; _currentZ = z;
                 HighlightArea();
             }
         }
@@ -123,7 +120,7 @@ public class Grid2DView : MonoBehaviour
         {
             for (int z = minZ; z <= maxZ; z++)
             {
-                _cellViews[x, z].SetColor(highlightColor);
+                _cellViews[x, z].SetHighlight(highlightColor);
             }
         }
     }
@@ -134,14 +131,25 @@ public class Grid2DView : MonoBehaviour
         {
             for (int z = 0; z < Height; z++)
             {
-                _cellViews[x, z].ResetColor();
+                _cellViews[x, z].ResetHighlight();
             }
         }
     }
 
-    private void SetCellColor(int x, int z, Color color)
+    public void SetCellColor(int x, int z, Color color)
     {
         if (x < 0 || x >= Width || z < 0 || z >= Height) return;
-        _cellViews[x, z].SetColor(color);
+        _cellViews[x, z].SetBlockColor(color);
+    }
+
+    public void ClearAll()
+    {
+        for (int x = 0; x < Width; x++)
+        {
+            for (int z = 0; z < Height; z++)
+            {
+                _cellViews[x, z].SetBlockColor(Color.clear);
+            }
+        }
     }
 }
