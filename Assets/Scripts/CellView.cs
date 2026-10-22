@@ -1,38 +1,33 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
-public class CellView : MonoBehaviour, IPointerClickHandler
+public class CellView : MonoBehaviour
 {
     [SerializeField] private Image background;
 
     private Color _defaultColor;
-    public int X { get; private set; }
-    public int Z { get; private set; }
-
-    public event Action<int, int> OnClicked;
+    private Color _blockColor;
 
     public void Initialize(int x, int z)
     {
-        X = x;
-        Z = z;
         name = $"Cell_{x}_{z}";
         _defaultColor = background.color;
+        _blockColor = _defaultColor;
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void SetBlockColor(Color color)
     {
-        OnClicked?.Invoke(X, Z);
+        _blockColor = color.a <= 0.01f ? _defaultColor : color;
+        background.color = _blockColor;
     }
 
-    public void SetColor(Color color)
+    public void SetHighlight(Color color)
     {
         background.color = color;
     }
 
-    public void ResetColor()
+    public void ResetHighlight()
     {
-        background.color = _defaultColor;
+        background.color = _blockColor;
     }
 }
