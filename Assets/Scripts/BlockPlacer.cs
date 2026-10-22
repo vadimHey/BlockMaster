@@ -6,12 +6,12 @@ public class BlockPlacer : MonoBehaviour
     [SerializeField] private GameObject smallBlockPrefab;
     [SerializeField] private GridModel gridModel;
     [SerializeField] private Grid2DView grid2DView;
+    [SerializeField] private Scene3DView scene3DView;
     [SerializeField] private ColorPaletteView colorPaletteView;
     [SerializeField] private TypeSelector typeSelector;
+    [SerializeField] private ActionHistory actionHistory;
 
-    private const float CellSize = 1f, HalfCellSize = CellSize / 2f;
-    private const float BaseHeight = 0.25f;
-    private const float BigBlockHeight = 1.06f, SmallBlockHeight = 1.1f / 3f;
+    private const float BigBlockHeight = 1.44f, SmallBlockHeight = BigBlockHeight / 3f;
 
     private GameObject _currentBlockPrefab;
     private float _currentBlockHeight;
@@ -40,17 +40,6 @@ public class BlockPlacer : MonoBehaviour
             typeSelector.OnTypeChanged -= HandleTypeChanged;
     }
 
-    private void SetColor(Color color)
-    {
-        _currentColor = color;
-    }
-
-    private void HandleTypeChanged(bool isBig)
-    {
-        if (isBig) SelectBigBlock();
-        else SelectSmallBlock();
-    }
-
     private void PlaceBlocksInArea(int startX, int startZ, int endX, int endZ)
     {
         int minX = Mathf.Min(startX, endX);
@@ -67,10 +56,12 @@ public class BlockPlacer : MonoBehaviour
                 if (x < 0 || x >= gridModel.Width) continue;
                 if (z < 0 || z >= gridModel.Height) continue;
 
-                float h = gridModel.GetHeight(x, z);
-                if (h > maxHeight) maxHeight = h;
+                float height = gridModel.GetTopHeight(x, z);
+                if (height > maxHeight) maxHeight = height;
             }
         }
+
+        GridAction action = new();
 
         for (int x = minX; x <= maxX; x++)
         {
@@ -79,26 +70,34 @@ public class BlockPlacer : MonoBehaviour
                 if (x < 0 || x >= gridModel.Width) continue;
                 if (z < 0 || z >= gridModel.Height) continue;
 
-                float worldZ = (gridModel.Height - 1 - z);
+                float bottom = maxHeight;
+                float top = maxHeight + _currentBlockHeight;
 
-                Vector3 spawnPos = new(x * CellSize + HalfCellSize, BaseHeight + maxHeight, worldZ * CellSize + HalfCellSize);
+                BlockData newBlock = new(bottom, top, _currentColor);
 
-                GameObject block = Instantiate(_currentBlockPrefab, spawnPos, Quaternion.identity);
-                ApplyColor(block, _currentColor);
+                Color oldColor = gridModel.GetTopColor(x, z);
+                float oldTop = gridModel.GetTopHeight(x, z);
 
-                gridModel.SetHeight(x, z, maxHeight + _currentBlockHeight);
+                gridModel.AddBlock(x, z, bottom, top, _currentColor);
+                grid2DView.SetCellColor(x, z, _currentColor);
+                scene3DView.RebuildColumn(x, z);
+
+                action.Changes.Add(new(x, z, oldTop, top, oldColor, _currentColor, newBlock));
             }
         }
+
+        actionHistory.Push(action);
     }
 
-    private void ApplyColor(GameObject block, Color color)
+    private void SetColor(Color color)
     {
-        Renderer[] renderers = block.GetComponentsInChildren<Renderer>();
+        _currentColor = color;
+    }
 
-        foreach (Renderer renderer in renderers)
-        {
-            renderer.material.color = color;
-        }
+    private void HandleTypeChanged(bool isBig)
+    {
+        if (isBig) SelectBigBlock();
+        else SelectSmallBlock();
     }
 
     private void SelectBigBlock()
