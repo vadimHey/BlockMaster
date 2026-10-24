@@ -36,9 +36,15 @@ public class Scene3DView : MonoBehaviour
         {
             bool isBig = data.Height >= BigBlockHeight - 0.001f;
             GameObject prefab = isBig ? bigBlockPrefab : smallBlockPrefab;
+
             Vector3 pos = new(x * CellSize + HalfCellSize, BaseHeight + data.Bottom, worldZ * CellSize + HalfCellSize);
             GameObject block = Instantiate(prefab, pos, Quaternion.identity, blocksParent);
-            ApplyColor(block, data.Color);
+
+            Renderer[] renderers = block.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                renderer.material.color = data.Color;
+            }
             _columns[key].Add(block);
         }
     }
@@ -53,14 +59,5 @@ public class Scene3DView : MonoBehaviour
             }
         }
         _columns.Clear();
-    }
-
-    private void ApplyColor(GameObject block, Color color)
-    {
-        Renderer[] renderers = block.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
-        {
-            renderer.material.color = color;
-        }
     }
 }
